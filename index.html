@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кликер Монета</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(180deg, #000000, #2B2B2B);
+            font-family: Arial, sans-serif;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: #333;
+        }
+
+        .header img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+
+        .header .energy-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .header .energy-container img {
+            width: 24px;
+            height: 24px;
+            margin-right: 5px;
+        }
+
+        .container {
+            margin-top: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        #coin {
+            width: 300px; /* Увеличен размер монеты в 3 раза */
+            height: 300px;
+            background-image: url('coin.png'); /* Используем локальный файл монеты */
+            background-size: cover;
+            border-radius: 50%;
+            margin: 20px auto;
+            position: relative;
+            cursor: pointer;
+        }
+
+        #balance {
+            font-size: 3em;
+            margin-top: 30px;
+            color: #00BFFF;
+        }
+
+        #energy {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+        }
+
+        #energy img {
+            width: 24px;
+            height: 24px;
+            margin-right: 5px;
+        }
+
+        .floating-text {
+            position: absolute;
+            font-size: 2em;
+            color: #00FF00;
+            animation: floatUp 1s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+        }
+
+        .bottom-panel {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: #333;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px;
+        }
+
+        .bottom-panel-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+        }
+
+        .bottom-panel-item img {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 5px;
+        }
+
+        .upgrade-panel {
+            position: fixed;
+            bottom: 70px;
+            width: 90%;
+            max-width: 400px;
+            background: #222;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .upgrade-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #333;
+            border-radius: 5px;
+        }
+
+        .upgrade-item img {
+            width: 50px;
+            height: 50px;
+            margin-right: 10px;
+        }
+
+        .upgrade-item button {
+            background: #444;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="info">
+            <img src="hamster.png" alt="Профиль" /> <!-- Локальная картинка профиля -->
+        </div>
+    </div>
+
+    <div id="energy">
+        <img src="enerdy.png" alt="Энергия" /> <!-- Локальная картинка энергии -->
+        <div id="energyCount">Энергия: 100</div>
+    </div>
+
+    <div class="container">
+        <div id="balance">0</div>
+        <div id="coin"></div>
+    </div>
+
+    <div class="bottom-panel">
+        <div class="bottom-panel-item" id="upgradeButton">
+            <img src="upgrade.png" alt="Прокачка" /> <!-- Иконка для прокачки -->
+            <span>Прокачка</span>
+        </div>
+    </div>
+
+    <div class="upgrade-panel" id="upgradePanel">
+        <div class="upgrade-item">
+            <div class="upgrade-info">
+                <img src="battery.png" alt="Energy Limit Icon"> <!-- Иконка для Energy Limit -->
+                <span>Energy Limit (+100 энергии)</span>
+            </div>
+            <div>
+                <span>200 монет</span>
+                <button id="energyLimitButton">Прокачать</button>
+            </div>
+        </div>
+        <div class="upgrade-item">
+            <div class="upgrade-info">
+                <img src="hand.png" alt="Multitap Icon"> <!-- Иконка для Multitap -->
+                <span>Multitap (+3 к клику)</span>
+            </div>
+            <div>
+                <span>200 монет</span>
+                <button id="multiTapButton">Прокачать</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Загружаем баланс и энергию из localStorage или задаем начальные значения
+            let balance = localStorage.getItem('balance') || 0;
+            balance = parseInt(balance);
+            let energy = localStorage.getItem('energy') || 100;
+            energy = parseInt(energy);
+            let energyLimit = localStorage.getItem('energyLimit') || 100;
+            energyLimit = parseInt(energyLimit);
+            let clickPower = localStorage.getItem('clickPower') || 1;
+            clickPower = parseInt(clickPower);
+
+            const balanceElement = document.getElementById('balance');
+            const coinElement = document.getElementById('coin');
+            const energyElement = document.getElementById('energyCount');
+            const container = document.querySelector('.container');
+            const upgradeButton = document.getElementById('upgradeButton');
+            const upgradePanel = document.getElementById('upgradePanel');
+            const energyLimitButton = document.getElementById('energyLimitButton');
+            const multiTapButton = document.getElementById('multiTapButton');
+
+            // Обновляем баланс на экране
+            function updateBalance() {
+                balanceElement.textContent = `${balance}`;
+            }
+
+            // Обновляем количество энергии на экране
+            function updateEnergy() {
+                energyElement.textContent = `Энергия: ${energy}`;
+            }
+
+            updateBalance();
+            updateEnergy();
+
+            // Добавляем обработчик клика по монете
+            coinElement.addEventListener('click', (e) => {
+                if (energy > 0) {
+                    balance += clickPower;
+                    energy--;
+                    updateBalance();
+                    updateEnergy();
+                    // Сохраняем баланс и энергию в localStorage
+                    localStorage.setItem('balance', balance);
+                    localStorage.setItem('energy', energy);
+
+                    // Создаем плавающий текст, отображающий текущий множитель клика
+                    const floatingText = document.createElement('div');
+                    floatingText.textContent = `+${clickPower}`;
+                    floatingText.className = 'floating-text';
+                    floatingText.style.left = `${e.clientX - 50}px`;
+                    floatingText.style.top = `${e.clientY - 50}px`;
+                    container.appendChild(floatingText);
+
+                    // Удаляем элемент после завершения анимации
+                    floatingText.addEventListener('animationend', () => {
+                        container.removeChild(floatingText);
+                    });
+                }
+            });
+
+            // Восстанавливаем энергию раз в 0.5 секунд, если она меньше energyLimit
+            setInterval(() => {
+                if (energy < energyLimit) {
+                    energy++;
+                    updateEnergy();
+                    localStorage.setItem('energy', energy);
+                }
+            }, 500);
+
+            // Открываем и закрываем панель прокачки
+            upgradeButton.addEventListener('click', () => {
+                upgradePanel.style.display = upgradePanel.style.display === 'none' || upgradePanel.style.display === '' ? 'flex' : 'none';
+            });
+
+            // Обработчик для увеличения лимита энергии
+            energyLimitButton.addEventListener('click', () => {
+                if (balance >= 200) {
+                    balance -= 200;
+                    energyLimit += 100;
+                    updateBalance();
+                    localStorage.setItem('balance', balance);
+                    localStorage.setItem('energyLimit', energyLimit);
+                }
+            });
+
+            // Обработчик для увеличения множителя клика
+            multiTapButton.addEventListener('click', () => {
+                if (balance >= 200) {
+                    balance -= 200;
+                    clickPower += 3;
+                    updateBalance();
+                    localStorage.setItem('balance', balance);
+                    localStorage.setItem('clickPower', clickPower);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
